@@ -43,3 +43,39 @@ def rel_error(x,y):
 def loss_fn(x, y):
 
     return None
+
+def load_test_images(filename):
+
+    file = open(filename, 'r')
+    paths = []
+
+    while True:
+        line = file.readline()
+        item = []
+
+        if not line:
+            break
+
+        image_1, image_2, label = line.split(' ')
+
+        item.append(image_1)
+        item.append(image_2)
+        item.append(label)
+        paths.append(item)
+
+    return torch.tensor(paths)
+        
+def load_train_images(filename):
+
+    file = open(filename, 'r')
+    paths = []
+
+    while True:
+        line = file.readline()
+
+        if not line:
+            break
+
+        paths.append(line.trim())
+    
+    return torch.tensor(paths)
