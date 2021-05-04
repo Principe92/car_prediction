@@ -40,7 +40,7 @@ def train(model, optim, batch_size=128, show_every=250, num_epochs=10, train_loa
     return losses
 
 
-def validate(loader=None, batches=None):
+def validate(model, loader=None, batches=None):
 
     model.eval()
     loss = None
