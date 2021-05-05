@@ -7,14 +7,15 @@ class SVM(torch.nn.Module):
         super(SVM, self).__init__()
 
         self.model = models.resnet18(pretrained=True)
+        
 
-        self.model.fc = torch.nn.Sequential(
-            torch.nn.Linear(512, 64)
-        )
+        # self.model.fc = torch.nn.Sequential(
+        #     torch.nn.Linear(512, 64)
+        # )
 
     def forward(self, x):
 
-        return x
+        return self.model(x)
 
 
 class Classifier(torch.nn.Module):
@@ -23,10 +24,10 @@ class Classifier(torch.nn.Module):
 
         self.model = models.resnet18(pretrained=True)
 
-        self.model.fc = torch.nn.Sequential(
-            torch.nn.Linear(512, 64),
-            torch.nn.Softmax()
-        )
+        # self.model.fc = torch.nn.Sequential(
+        #     torch.nn.Linear(512, 64),
+        #     torch.nn.Softmax()
+        # )
 
     def forward(self, x):
 
