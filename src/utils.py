@@ -50,7 +50,7 @@ def load_test_images(filename):
     paths = []
 
     while True:
-        line = file.readline()
+        line = file.readline().replace('\n', '')
         item = []
 
         if not line:
@@ -63,7 +63,7 @@ def load_test_images(filename):
         item.append(label)
         paths.append(item)
 
-    return torch.tensor(paths)
+    return np.array(paths)
         
 def load_train_images(filename):
 
@@ -71,11 +71,11 @@ def load_train_images(filename):
     paths = []
 
     while True:
-        line = file.readline()
+        line = file.readline().replace('\n', '')
 
         if not line:
             break
 
-        paths.append(line.trim())
+        paths.append([line])
     
-    return torch.tensor(paths)
+    return np.array(paths)
