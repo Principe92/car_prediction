@@ -1,107 +1,153 @@
 
+from numpy.core.numeric import full
 import torch
-from src.utils import loss_fn
+from src.utils import get_acc
 from torch.autograd import Variable
+from torchvision import models
+import pandas as pd
+from sklearn.decomposition import PCA
+import numpy as np
 
 
-def train(
-        model: torch.nn.Module,
-        optim, batch_size=128, show_every=250, num_epochs=10, train_loader=None, val_loader=None, device=None):
+def train(model, loader=None, device=None):
     """
 
     """
 
-    iter_count = 0
-    losses = []
+    vectors = []
+    labels = []
 
-    model.eval()
+    for v, x, y in loader:
+        for i in range(0, x.shape[0]):
 
-    for epoch in range(num_epochs):
-        print('EPOCH: ', (epoch+1))
+            img = v[i]
+            label = y[i]
 
-        for x1, x2, label in train_loader:
-
-            # print(x.shape)
-            # x1, x2, label = x
-
-            v1 = get_vector(model, x1[0], device)
-            v2 = get_vector(model, x2[0], device)
-
-            # loss = None
-            # labels = None # TODO
-
-            # optim.zero_grad()
-
-            # output = model(x) # predict
-
-            # loss = loss_fn(output, labels)
-            # loss.backward()
-
-            # optim.step()
-
-            cos = torch.nn.CosineSimilarity(dim=1, eps=1e-6)
-            cos_sim = cos(v1.unsqueeze(0), v2.unsqueeze(0))
-
-            predicted = 1 if cos_sim > 0.5 else 0
-            print(f'cos: {cos_sim} | actual: {label} | predicted: {predicted}')
+            # v = get_vector(resnet, img, device)
+            vectors.append(img)
+            labels.append(label)
 
 
-            if (iter_count % show_every == 0):
-                # val_loss, val_acc = validate(model, val_loader, batches=4) # run validation
+    df = pd.DataFrame(torch.cat(vectors, dim=0).numpy())
+    ds_size = df.shape[0]  # 4352
+    ds_size_hf = int(ds_size / 4)
 
-                # print('Iter: {}, train loss: {:.4}, val loss: {:.4}, val acc: {:.4}'.format(iter_count, loss.item(), val_loss, val_acc))
-                print('Iter: {}'.format(iter_count))
+    pca = PCA(n_components=100)
 
-                # losses.append(loss.item())
+    reducedDf1 = pd.DataFrame(data=pca.fit_transform(df))
+    reducedDf1['label'] = pd.DataFrame(np.array(labels))
 
-            iter_count += 1
+    mixed_data = pd.DataFrame()
+    count = 0
+    while count < ds_size_hf:
+        index = np.random.randint(0, len(reducedDf1))
 
-    return losses
+        first_row = reducedDf1.iloc[index]
+        first_label = reducedDf1['label'][index]  # getting the first label
+
+        reducedDf1.drop(index, inplace=True)
+
+        # Dropping the original row so it isn't found multiple times
+        reducedDf1.reset_index(inplace=True, drop=True)
+
+        for row in range(0, len(reducedDf1)):
+            if reducedDf1['label'][row] == first_label:
+                second_row = reducedDf1.iloc[row]
+
+                # Dropping the original row so it isn't found multiple times
+                reducedDf1.drop(row)
+
+                # Combining the two rows into one and adding the match label
+                first_row = first_row.append(second_row)
+                first_row['Match'] = 1
+                first_row = first_row.reset_index(drop=True)
+
+                # adding the original to the new df
+                mixed_data = pd.concat(
+                    [mixed_data, first_row], axis=1, ignore_index=True)
+
+                count = count+1
+                break
+
+    # Transposing Mixed_Data into the right orientation
+    mixed_data = mixed_data.T
+    mixed_data = mixed_data.rename(
+        columns={100: 'label1', 201: 'label2', 202: 'Match'})
+    columns_name = mixed_data.columns
+
+    # Matching the other half of the data randomly (how random depends on if the data was shuffled before hand)
+    df_first_half = reducedDf1[0:ds_size_hf]
+    df_first_half.reset_index(inplace=True, drop=True)
+    df_second_half = reducedDf1[ds_size_hf: int(ds_size/2) + 1]
+    df_second_half.reset_index(inplace=True, drop=True)
+
+    # combining the unpaired data
+    mismatched_df = pd.concat(
+        [df_first_half, df_second_half], axis=1, join="inner")
+    mismatched_df['Match'] = 0
+    mismatched_df.columns = columns_name
+
+    # Combining the data into a full set again, shuffling it and reset index
+    full_data = pd.concat([mismatched_df, mixed_data]).sample(frac=1)
+    full_data.reset_index(inplace=True, drop=True)
+
+    y_train = full_data['Match'].astype(int)
+    x_train = full_data.drop('Match', axis=1)
+    x_train = x_train.drop('label1', axis=1)
+    x_train = x_train.drop('label2', axis=1)
+
+    print(f'dataset size: {x_train.shape}')
+    model(x_train.to_numpy(), y_train.to_numpy())
+
+    o = model.predict(x_train.to_numpy())
+
+    print('Accuracy is given by: %f' % (get_acc(o, y_train.to_numpy())))
+
+    # print(o)
 
 
-def validate(model, loader=None, batches=None):
+def test(model, loader=None, device=None, is_test=True):
 
-    model.eval()
-    loss = None
-    acc = None
-    correct = 0
-    examples = 0
+    if is_test:
+        model.eval()
 
-    for i, batch in enumerate(loader):
+    vectors1 = []
+    vectors2 = []
+    labels = []
 
-        output = model(x)
-        x, target = batch  # TODO
+    for v1, v2, x1, x2, y in loader:
+        for i in range(0, x1.shape[0]):
 
-        loss += loss_fn(output, target).cpu().item()
+            label = y[i]
 
-        # predict the argmax of the log-probabilities
-        predicted = output.data.max(1, keepdim=True)[1]
-        correct += predicted.eq(target.data.view_as(predicted)).cpu().sum()
-        examples += predicted.size(0)
-
-        if batches and (i >= batches):
-            break
-
-    loss /= examples
-    acc = 100. * correct / examples
-
-    return loss, acc
+            vectors1.append(v1[i])
+            vectors2.append(v2[i])
+            labels.append(y[i])
 
 
-def get_vector(model, img, device):
+    df1 = pd.DataFrame(torch.cat(vectors1, dim=0).numpy())
+    df2 = pd.DataFrame(torch.cat(vectors2, dim=0).numpy())
 
-    t_img = Variable(img.unsqueeze(0)).to(device)
 
-    embedding = torch.zeros(512)
+    pca = PCA(n_components=100)
 
-    def copy_data(m, i, o):
-        embedding.copy_(o.data)
+    reducedDf1 = pd.DataFrame(data=pca.fit_transform(df1))
+    reducedDf2 = pd.DataFrame(data=pca.fit_transform(df2))
 
-    layer = model.model._modules.get('avgpool')
-    h = layer.register_forward_hook(copy_data)
+    # combining the unpaired data
+    mismatched_df = pd.concat(
+        [reducedDf1, reducedDf2], axis=1, join="inner")
+    mismatched_df['Match'] = pd.DataFrame(np.array(labels))
+    # mismatched_df.columns = columns_name
 
-    model(t_img)
+    # Combining the data into a full set again, shuffling it and reset index
+    full_data = mismatched_df.copy()
+    full_data.reset_index(inplace=True, drop=True)
 
-    h.remove()
+    y_test = full_data['Match'].astype(int)
+    x_test = full_data.drop('Match', axis=1)
 
-    return embedding
+    o = model.predict(x_test.to_numpy())
+
+    print('Accuracy is given by: %f' % (get_acc(o, y_test.to_numpy())))
+

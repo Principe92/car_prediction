@@ -1,9 +1,10 @@
 """Support Vector Machine (SVM) model."""
 
 import numpy as np
+import torch
 
 
-class SVM:
+class SVM(torch.nn.Module):
     def __init__(self, n_class: int, lr: float, epochs: int, reg_const: float):
         """Initialize a new classifier.
 
@@ -13,6 +14,8 @@ class SVM:
             epochs: the number of epochs to train for
             reg_const: the regularization constant
         """
+        super(SVM, self).__init__()
+
         self.w = []  # TODO: change this
         self.alpha = lr
         self.epochs = epochs
@@ -35,43 +38,49 @@ class SVM:
             the gradient with respect to weights w; an array of the same shape
                 as w
         """
-        #Initializing weight array
-        gradients=np.random.rand(self.n_class,X_train.shape[1])
-        loss=0
+        # Initializing weight array
+        gradients = np.random.rand(self.n_class, X_train.shape[1])
+        loss = 0
 
-        #num_batches=10
-        #data_shuffle=np.random.shuffle(data) 
-        #batch = data.shape[0] // batch_size 
-        
-        #Calculating gradients (credit to https://mlxai.github.io/2017/01/06/vectorized-implementation-of-svm-loss-and-gradient-update.html for some help)
-        
-        for i in range(0,len(X_train)):
-                    #print(i)
-                    #Make initial prediction
-                    scores=np.matmul(self.w,np.transpose(X_train[i]))
-                    
-                    for c in range(0,self.n_class):
-                        if c==y_train[i]:
-                            continue
-                        margin=scores[c]-scores[y_train[i]]+1 #want min distance 1
-                        #Update function
-                        if margin>0:
-                            loss +=margin
-                            gradients[y_train[i]] += X_train[i]
-                            gradients[c] -= X_train[i]
+        # print('w: ', self.w.shape)
+        # print('y: ', y_train)
 
-        #Averaging loss
+        # num_batches=10
+        # data_shuffle=np.random.shuffle(data)
+        #batch = data.shape[0] // batch_size
+
+        # Calculating gradients (credit to https://mlxai.github.io/2017/01/06/vectorized-implementation-of-svm-loss-and-gradient-update.html for some help)
+
+        for i in range(0, len(X_train)):
+            # print(i)
+            # Make initial prediction
+
+            scores = np.matmul(self.w, np.transpose(X_train[i])) # 2 * 200 X 200 * 216
+
+            for c in range(0, self.n_class):
+                if c == y_train[i]:
+                    continue
+                margin = scores[c]-scores[int(y_train[i])]+1  # want min distance 1
+
+                # Update function
+                if margin > 0:
+                    loss += margin
+                    gradients[y_train[i]] += X_train[i]
+                    gradients[c] -= X_train[i]
+
+        # Averaging loss
         loss /= len(X_train)
         gradients /= len(X_train)
 
-        #Regularization
+        # Regularization
         loss += 0.5*self.reg_const * np.sum(self.w**2)
-        gradients +=self.reg_const*self.w
-        
-        # TODO: implement me
-        return gradients #do I even need to calculate losses? (only for sanity check I think)
+        gradients += self.reg_const*self.w
 
-    def train(self, X_train: np.ndarray, y_train: np.ndarray):
+        # TODO: implement me
+        # do I even need to calculate losses? (only for sanity check I think)
+        return gradients
+
+    def forward(self, X_train: np.ndarray, y_train: np.ndarray):
         """Train the classifier.
 
         Hint: operate on mini-batches of data for SGD.
@@ -82,24 +91,27 @@ class SVM:
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
-        self.w=np.random.rand(self.n_class,X_train.shape[1])
-        #Thinking something like: https://cs231n.github.io/optimization-1/
-        num_batches=10 #where does this fit in
-        batch_size=len(X_train)/num_batches
+        # print(f'xtrain shape: {X_train.shape}')
+        self.w = np.random.rand(self.n_class, X_train.shape[1])
+        # Thinking something like: https://cs231n.github.io/optimization-1/
+        num_batches = 5  # where does this fit in
+        batch_size = len(X_train)/num_batches
 
-        for e in range(0,self.epochs):
-            for i in range(0,num_batches):
-                
-                batch_x=X_train[int(i*(batch_size)):int(i*batch_size+batch_size-1)]
-                batch_y=y_train[int(i*(batch_size)):int(i*batch_size+batch_size-1)]
-                #print(batch_x)
-                #print(batch_y)
-                #print(type(batch_y))
-                gradients=SVM.calc_gradient(self,batch_x,batch_y)
-                self.w +=self.alpha*gradients
-                #print(self.w)
-            
-        pass
+        for e in range(0, self.epochs):
+            for i in range(0, num_batches):
+
+                batch_x = X_train[int(i*(batch_size))                                  :int(i*batch_size+batch_size-1)]
+                batch_y = y_train[int(i*(batch_size))                                  :int(i*batch_size+batch_size-1)]
+                # print(batch_x)
+                # print(batch_y)
+                # print(type(batch_y))
+
+                # print(f'batch size: {batch_x.shape}')
+                gradients = SVM.calc_gradient(self, batch_x, batch_y)
+                self.w += self.alpha*gradients
+                # print(self.w)
+
+        return self.w
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
         """Use the trained weights to predict labels for test data points.
@@ -115,17 +127,12 @@ class SVM:
         """
         # TODO: implement me
 
-        y_test=[]
-        for i in range(0,len(X_test)):
-            fx=np.matmul(self.w,np.transpose(X_test[i]))
-            index=np.argmax(fx)
-            #print(index)
+        y_test = []
+        for i in range(0, len(X_test)):
+            fx = np.matmul(self.w, np.transpose(X_test[i]))
+            index = np.argmax(fx)
+            # print(index)
             y_test.append(index)
-            #print(y_test)
+            # print(y_test)
 
-        
         return y_test
-
-
-        
-        

@@ -3,6 +3,8 @@ import numpy as np
 from PIL import Image
 import torch.utils.data as data
 from torchvision import datasets, transforms
+from torchvision import models
+from src.utils import get_vector
 
 
 class ImageFolderWithPaths(datasets.ImageFolder):
@@ -30,12 +32,17 @@ class ImageFolderWithPaths(datasets.ImageFolder):
 
 class TestSet(data.Dataset):
 
-    def __init__(self, root: str, paths: np.ndarray, transform=None) -> None:
+    def __init__(self, root: str, paths: np.ndarray, device, transform=None) -> None:
         super().__init__()
 
         self.transform = transform
         self.paths = paths
         self.root = root
+        self.device = device
+
+        self.resnet = models.resnet18(pretrained=True)
+        self.resnet.eval()
+        self.resnet.to(device)
 
     def __getitem__(self, index):
 
@@ -48,7 +55,11 @@ class TestSet(data.Dataset):
             image_1 = self.transform(image_1)
             image_2 = self.transform(image_2)
 
-        return image_1, image_2, label
+        v1 = get_vector(self.resnet, image_1, self.device).reshape((1, 512))
+        v2 = get_vector(self.resnet, image_2, self.device).reshape((1, 512))
+        
+
+        return v1, v2, image_1, image_2, label
 
     def __len__(self):
         return self.paths.shape[0]
@@ -56,16 +67,23 @@ class TestSet(data.Dataset):
 
 class TrainSet(data.Dataset):
 
-    def __init__(self, root: str, paths: np.ndarray, transform: transforms.Compose = None) -> None:
+    def __init__(self, root: str, paths: np.ndarray, device, transform: transforms.Compose = None) -> None:
         super().__init__()
 
         self.transform = transform
         self.paths = paths
         self.root = root
+        self.device = device
+        
+        self.resnet = models.resnet18(pretrained=True)
+        self.resnet.eval()
+        self.resnet.to(device)
 
     def __getitem__(self, index):
 
         path = self.paths[index][0]
+
+        model = int(path.split('/')[1])
 
         path = self.root + '/' + path
 
@@ -74,7 +92,10 @@ class TrainSet(data.Dataset):
         if self.transform is not None:
             image = self.transform(image)
 
-        return image, 1
+        
+        v = get_vector(self.resnet, image, self.device).reshape((1, 512))
+
+        return v, image, model
 
     def __len__(self):
         return self.paths.shape[0]

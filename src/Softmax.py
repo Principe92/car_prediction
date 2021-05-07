@@ -1,9 +1,10 @@
 """Softmax model."""
 
 import numpy as np
+import torch
 
 
-class Softmax:
+class Softmax(torch.nn.Module):
     def __init__(self, n_class: int, lr: float, epochs: int, reg_const: float):
         """Initialize a new classifier.
 
@@ -13,6 +14,8 @@ class Softmax:
             epochs: the number of epochs to train for
             reg_const: the regularization constant
         """
+        super(Softmax, self).__init__()
+
         self.w = []  # TODO: change this
         self.lr = lr
         self.epochs = epochs
@@ -106,7 +109,7 @@ class Softmax:
         return gradients
         
 
-    def train(self, X_train: np.ndarray, y_train: np.ndarray):
+    def forward(self, X_train: np.ndarray, y_train: np.ndarray):
         """Train the classifier.
 
         Hint: operate on mini-batches of data for SGD.

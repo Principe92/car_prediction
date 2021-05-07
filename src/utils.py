@@ -3,6 +3,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from torch.autograd import Variable
 
 
 def show_images(images, color=False):
@@ -79,3 +80,25 @@ def load_train_images(filename):
         paths.append([line])
     
     return np.array(paths)
+
+
+def get_vector(model, img, device):
+
+    t_img = Variable(img.unsqueeze(0)).to(device)
+
+    embedding = torch.zeros(512)
+
+    def copy_data(m, i, o):
+        embedding.copy_(o.data.reshape(o.data.size(1)))
+
+    layer = model._modules.get('avgpool')
+    h = layer.register_forward_hook(copy_data)
+
+    model(t_img)
+
+    h.remove()
+
+    return embedding
+
+def get_acc(pred, y_test):
+    return np.sum(y_test==pred)/len(y_test)*100
