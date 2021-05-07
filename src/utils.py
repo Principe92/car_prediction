@@ -45,16 +45,17 @@ def loss_fn(x, y):
 
     return None
 
-def load_test_images(filename):
+def load_test_images(filename) -> np.ndarray:
 
     file = open(filename, 'r')
     paths = []
+    itr = 0
 
     while True:
         line = file.readline().replace('\n', '')
         item = []
 
-        if not line:
+        if not line or itr == 5000:
             break
 
         image_1, image_2, label = line.split(' ')
@@ -64,9 +65,11 @@ def load_test_images(filename):
         item.append(label)
         paths.append(item)
 
+        itr += 1
+
     return np.array(paths)
         
-def load_train_images(filename):
+def load_train_images(filename) -> np.ndarray:
 
     file = open(filename, 'r')
     paths = []
@@ -82,7 +85,7 @@ def load_train_images(filename):
     return np.array(paths)
 
 
-def get_vector(model, img, device):
+def get_vector(model, img, device, layer) -> torch.Tensor:
 
     t_img = Variable(img.unsqueeze(0)).to(device)
 
@@ -91,7 +94,6 @@ def get_vector(model, img, device):
     def copy_data(m, i, o):
         embedding.copy_(o.data.reshape(o.data.size(1)))
 
-    layer = model._modules.get('avgpool')
     h = layer.register_forward_hook(copy_data)
 
     model(t_img)
@@ -100,5 +102,5 @@ def get_vector(model, img, device):
 
     return embedding
 
-def get_acc(pred, y_test):
+def get_acc(pred, y_test) -> float:
     return np.sum(y_test==pred)/len(y_test)*100
