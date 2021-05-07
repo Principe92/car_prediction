@@ -3,11 +3,11 @@
 ## All training data results
 
 1. Trial 1
-> learning_rate = 0.001
-> epochs = 50
-> n_class = 2
-> rc = 0.1
-> accuracy: 52
+>> learning_rate = 0.001
+epochs = 50
+n_class = 2
+rc = 0.1
+accuracy: 52
 
 2. Trial 2
 learning_rate = 0.01
