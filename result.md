@@ -39,7 +39,7 @@ rc = 0.1
 Training Accuracy : 81.797753 | Validation Accuracy: 77.802691
 ```
 
-3. Trial 3: Reduce the learning rate
+3. Trial 3: Increase the learning rate
 ```
 learning_rate = 0.1
 epochs = 100
@@ -56,3 +56,23 @@ n_class = 2
 rc = 0.01
 Training Accuracy : 92.134831 | Validation Accuracy: 84.080717
 ```
+
+5. Trial 5: Reduce the regularization constant
+```
+learning_rate = 0.1
+epochs = 100
+n_class = 2
+rc = 0.001
+Training Accuracy : 91.910112 | Validation Accuracy: 83.632287
+```
+
+6. Trial 6: Reduce the regularization constant
+```
+learning_rate = 0.1
+epochs = 100
+n_class = 2
+rc = 0.0001
+Training Accuracy : 91.629213 | Validation Accuracy: 83.856502
+```
+
+# Softmax

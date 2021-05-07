@@ -78,7 +78,7 @@ class SVM(torch.nn.Module):
 
         # TODO: implement me
         # do I even need to calculate losses? (only for sanity check I think)
-        return gradients
+        return gradients, loss
 
     def forward(self, X_train: np.ndarray, y_train: np.ndarray):
         """Train the classifier.
@@ -96,8 +96,10 @@ class SVM(torch.nn.Module):
         # Thinking something like: https://cs231n.github.io/optimization-1/
         num_batches = 5  # where does this fit in
         batch_size = len(X_train)/num_batches
+        loss_list = []
 
         for e in range(0, self.epochs):
+            loss_epoch = 0
             for i in range(0, num_batches):
 
                 batch_x = X_train[int(i*(batch_size))                                  :int(i*batch_size+batch_size-1)]
@@ -107,11 +109,15 @@ class SVM(torch.nn.Module):
                 # print(type(batch_y))
 
                 # print(f'batch size: {batch_x.shape}')
-                gradients = SVM.calc_gradient(self, batch_x, batch_y)
+                gradients, loss = SVM.calc_gradient(self, batch_x, batch_y)
                 self.w += self.alpha*gradients
+                loss_epoch += loss
                 # print(self.w)
 
-        return self.w
+            loss_list.append(loss_epoch)
+
+
+        return loss_list
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
         """Use the trained weights to predict labels for test data points.
