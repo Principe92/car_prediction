@@ -11,7 +11,7 @@ rc = 0.1
 accuracy: 52
 ```
 
-2. Trial 2
+2. Trial 2: Reduce the learning rate
 ```
 learning_rate = 0.01
 epochs = 50
@@ -21,7 +21,7 @@ accuracy: 79.200359
 ```
 
 ## Training + Validation test results
-1. Trial 1
+1. Trial 1: Initial
 ```
 learning_rate = 0.01
 epochs = 50
@@ -30,7 +30,7 @@ rc = 0.1
 Training Accuracy : 75.280899 | Validation Accuracy: 73.094170
 ```
 
-2. Trial 2
+2. Trial 2: Increase the epoch to 100
 ```
 learning_rate = 0.01
 epochs = 100
@@ -39,7 +39,7 @@ rc = 0.1
 Training Accuracy : 81.797753 | Validation Accuracy: 77.802691
 ```
 
-3. Trial 3
+3. Trial 3: Reduce the learning rate
 ```
 learning_rate = 0.1
 epochs = 100
@@ -48,7 +48,7 @@ rc = 0.1
 Training Accuracy : 86.292135 | Validation Accuracy: 78.699552
 ```
 
-4. Trial 4
+4. Trial 4: Reduce the regularization constant
 ```
 learning_rate = 0.1
 epochs = 100
