@@ -62,6 +62,7 @@ while count<2250/2:
     
     for row in range(0,len(reducedDf1)):
         if reducedDf1['label'][row]==first_label:
+            #put in random chance that it takes this one and then random chance that it takes the next one
             second_row=reducedDf1.iloc[row]
             #print(second_row)
             reducedDf1.drop(row) #Dropping the original row so it isn't found multiple times
@@ -69,7 +70,8 @@ while count<2250/2:
             first_row=first_row.append(second_row)
             first_row['Match']=1
             first_row=first_row.reset_index(drop=True)
-            
+            print(first_row)
+            print(mixed_data)
             mixed_data=pd.concat([mixed_data,first_row],axis=1,ignore_index=True) #adding the original to the new df
             #print(mixed_data)
             count=count+1
