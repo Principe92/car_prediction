@@ -55,12 +55,14 @@ class SVM(torch.nn.Module):
             # print(i)
             # Make initial prediction
 
-            scores = np.matmul(self.w, np.transpose(X_train[i])) # 2 * 200 X 200 * 216
+            scores = np.matmul(self.w, np.transpose(
+                X_train[i]))  # 2 * 200 X 200 * 216
 
             for c in range(0, self.n_class):
                 if c == y_train[i]:
                     continue
-                margin = scores[c]-scores[int(y_train[i])]+1  # want min distance 1
+                # want min distance 1
+                margin = scores[c]-scores[int(y_train[i])]+1
 
                 # Update function
                 if margin > 0:
@@ -91,8 +93,8 @@ class SVM(torch.nn.Module):
             y_train: a numpy array of shape (N,) containing training labels
         """
         # TODO: implement me
-        # print(f'xtrain shape: {X_train.shape}')
         self.w = np.random.rand(self.n_class, X_train.shape[1])
+        
         # Thinking something like: https://cs231n.github.io/optimization-1/
         num_batches = 5  # where does this fit in
         batch_size = len(X_train)/num_batches
@@ -100,22 +102,22 @@ class SVM(torch.nn.Module):
 
         for e in range(0, self.epochs):
             loss_epoch = 0
+
+            if e % 50 == 0:
+                self.alpha = self.alpha/5
+
             for i in range(0, num_batches):
 
-                batch_x = X_train[int(i*(batch_size))                                  :int(i*batch_size+batch_size-1)]
-                batch_y = y_train[int(i*(batch_size))                                  :int(i*batch_size+batch_size-1)]
-                # print(batch_x)
-                # print(batch_y)
-                # print(type(batch_y))
+                batch_x = X_train[int(i*(batch_size))
+                                      :int(i*batch_size+batch_size-1)]
+                batch_y = y_train[int(i*(batch_size))
+                                      :int(i*batch_size+batch_size-1)]
 
-                # print(f'batch size: {batch_x.shape}')
                 gradients, loss = SVM.calc_gradient(self, batch_x, batch_y)
                 self.w += self.alpha*gradients
-                loss_epoch += loss
-                # print(self.w)
+                loss_epoch = loss
 
             loss_list.append(loss_epoch)
-
 
         return loss_list
 
@@ -137,8 +139,6 @@ class SVM(torch.nn.Module):
         for i in range(0, len(X_test)):
             fx = np.matmul(self.w, np.transpose(X_test[i]))
             index = np.argmax(fx)
-            # print(index)
             y_test.append(index)
-            # print(y_test)
 
         return y_test

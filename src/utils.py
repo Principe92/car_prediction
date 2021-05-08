@@ -55,7 +55,7 @@ def load_test_images(filename) -> np.ndarray:
         line = file.readline().replace('\n', '')
         item = []
 
-        if not line or itr == 5000:
+        if not line:
             break
 
         image_1, image_2, label = line.split(' ')
