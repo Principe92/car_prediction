@@ -1,15 +1,15 @@
 
-from numpy.core.numeric import full
+#CompCars Data Matcher
+#This script is designed to take the output weights of Resnet18, do a PCA, then create matched and mismatched
+#pairs for training and testing purposes.
+#Written by Peter Rhodes and Princewill Okorie
+
+#Import tools
 import torch
-from torch.nn import Module
-from src.utils import get_acc
-from torch.autograd import Variable
-from torchvision import models
 import pandas as pd
 from sklearn.decomposition import PCA
 import numpy as np
 from src.reader import TrainSet, TestSet
-import string
 from itertools import combinations
 
 class CarPredictor():
@@ -29,6 +29,7 @@ class CarPredictor():
         labels = []
         imagePaths = []
 
+        #Retrieving weight vectors, image and label from the data
         for i in range(len(dataset)):
             vector, image, label, path = dataset[i]
 
@@ -40,18 +41,22 @@ class CarPredictor():
 
         # Performing Dimensonality Reduction with PCA
         pca = PCA(n_components=100)
-
-        # Df1 PCA
         data = pd.DataFrame(data=pca.fit_transform(df))
+        
+        #Adding the labels and path to the data that went through the PCA
         data['label'] = pd.DataFrame(data=labels)
         data['path'] = pd.DataFrame(data=imagePaths)
 
+        #Making a copy of the dataframe to be used to create mismatched pairs latere
         data2 = data.copy()
 
+        #Creating Matched Pairs
         match_df = pd.DataFrame()
         count = 0
         stop = 0
         while stop == 0:
+            
+            #Getting the label of the first row and then determining all possible unique pairs
             label = data['label'][count]
             matched_index_list = data.index[data['label'] == label].tolist()
             possible_combos = list(combinations(matched_index_list, 2))
@@ -59,6 +64,7 @@ class CarPredictor():
             if len(possible_combos) != 0:
                 print(f'Label: {label} | Possible combos: {len(possible_combos)}')
 
+                #Looping through all possible unique pairs and adding them to the matched dataset
                 for i in range(0, len(possible_combos)):
 
                     # Getting values at index (left side of pair)
@@ -72,6 +78,7 @@ class CarPredictor():
 
                     # print(i)
 
+                #Deleting the rows that had the given label to reduce the search size of the dataframe
                 list_to_delete = set([i[0] for i in possible_combos])
 
                 # Getting rid of all rows with those labels
@@ -93,11 +100,15 @@ class CarPredictor():
         match_df['Match'] = 1
         match_df = match_df.rename(columns={100: 'label1', 101:'path1', 202: 'label2', 203:'path2', 204: 'Match'})
 
-        # Randomly mixing data for the rest
+
+
+
+        # Randomly mixing data for the unmatched pairs
         num_non_match = len(match_df)
         non_match_df = pd.DataFrame()
         print(f'# of matched data: {num_non_match}')
 
+        #Randomly selecting two rows and putting them together to create a mismatched pair
         while len(non_match_df.columns) < num_non_match:
             index1 = np.random.randint(0, len(data2))
             index2 = np.random.randint(0, len(data2))
@@ -118,7 +129,7 @@ class CarPredictor():
         non_match_df['Match'] = 0
         non_match_df = non_match_df.rename(columns={100: 'label1', 101:'path1', 202: 'label2', 203:'path2', 204: 'Match'})
 
-        # drop where matches accidently exist
+        # dropping rows where matches accidently exist
         non_match_df = non_match_df[non_match_df['label1'] != non_match_df['label2']]
 
         # Combining the two data sets
@@ -138,6 +149,7 @@ class CarPredictor():
         labels = []
         imagePaths = []
 
+        #Retrieving weight vectors, image and label from the data
         for i in range(len(dataset)):
             v1, v2, _, _, y, path = dataset[i]
 
@@ -149,6 +161,7 @@ class CarPredictor():
         df1 = pd.DataFrame(torch.cat(vectors1, dim=0).numpy())
         df2 = pd.DataFrame(torch.cat(vectors2, dim=0).numpy())
 
+        # Performing Dimensonality Reduction with PCA
         pca = PCA(n_components=100)
 
         reducedDf1 = pd.DataFrame(data=pca.fit_transform(df1))
