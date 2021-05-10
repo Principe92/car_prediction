@@ -2,6 +2,7 @@ import torch
 import numpy as np
 
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import matplotlib.gridspec as gridspec
 from torch.autograd import Variable
 
@@ -10,10 +11,10 @@ def show_images(images, color=False):
     if color:
         sqrtimg = int(np.ceil(np.sqrt(images.shape[2]*images.shape[3])))
     else:
-        images = np.reshape(images, [images.shape[0], -1])  # images reshape to (batch_size, D)
+        # images reshape to (batch_size, D)
+        images = np.reshape(images, [images.shape[0], -1])
         sqrtimg = int(np.ceil(np.sqrt(images.shape[1])))
     sqrtn = int(np.ceil(np.sqrt(images.shape[0])))
-
 
     fig = plt.figure(figsize=(sqrtn, sqrtn))
     gs = gridspec.GridSpec(sqrtn, sqrtn)
@@ -28,22 +29,74 @@ def show_images(images, color=False):
         if color:
             plt.imshow(np.swapaxes(np.swapaxes(img, 0, 1), 1, 2))
         else:
-            plt.imshow(img.reshape([sqrtimg,sqrtimg]))
-    return 
+            plt.imshow(img.reshape([sqrtimg, sqrtimg]))
+    return
+
+
+def show_prediction_images(
+        expected: np.ndarray,
+        actual: np.ndarray,
+        images: np.ndarray,
+        wrong: bool = True) -> None:
+
+    itr = 0
+
+    size = 20
+
+    img_vectors = []
+
+    for i in range(expected.shape[0]):
+        same = expected[i] == actual[i]
+
+        if wrong and not same and itr < size:
+            paths = images[i].split('||')
+            img_vectors.append(mpimg.imread(paths[0]))
+            img_vectors.append(mpimg.imread(paths[1]))
+            itr += 1
+
+        if not wrong and same and itr < size:
+            paths = images[i].split('||')
+            img_vectors.append(mpimg.imread(paths[0]))
+            img_vectors.append(mpimg.imread(paths[1]))
+            itr += 1
+
+        if itr == size:
+            break
+
+    img_vectors = np.array(img_vectors)
+    sqrtn = int(np.ceil(np.sqrt(img_vectors.shape[0])))
+
+    fig = plt.figure(figsize=(sqrtn, sqrtn))
+    gs = gridspec.GridSpec(size, 2)
+    gs.update(wspace=0.05, hspace=0.05)
+
+    for i, img in enumerate(img_vectors):
+        ax = plt.subplot(gs[i])
+        plt.axis('off')
+        ax.set_xticklabels([])
+        ax.set_yticklabels([])
+        ax.set_aspect('equal')
+
+        plt.imshow(np.swapaxes(np.swapaxes(img, 0, 1), 1, 2))
+    return
+
 
 def preprocess_img(x):
     return 2 * x - 1.0
 
+
 def deprocess_img(x):
     return (x + 1.0) / 2.0
 
-def rel_error(x,y):
+
+def rel_error(x, y):
     return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
 
 
 def loss_fn(x, y):
 
     return None
+
 
 def load_test_images(filename) -> np.ndarray:
 
@@ -68,7 +121,8 @@ def load_test_images(filename) -> np.ndarray:
         itr += 1
 
     return np.array(paths)
-        
+
+
 def load_train_images(filename) -> np.ndarray:
 
     file = open(filename, 'r')
@@ -81,7 +135,7 @@ def load_train_images(filename) -> np.ndarray:
             break
 
         paths.append([line])
-    
+
     return np.array(paths)
 
 
@@ -102,5 +156,6 @@ def get_vector(model, img, device, layer) -> torch.Tensor:
 
     return embedding
 
-def get_acc(pred, y_test) -> float:
-    return np.sum(y_test==pred)/len(y_test)*100
+
+def get_acc(pred: np.ndarray, actual: np.ndarray) -> float:
+    return np.sum(actual == pred)/len(actual)*100

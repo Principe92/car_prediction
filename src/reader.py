@@ -26,8 +26,12 @@ class TestSet(data.Dataset):
 
         image_1_path, image_2_path, label = self.paths[index]
 
-        image_1 = Image.open(self.root + '/image/' + image_1_path, mode='r')
-        image_2 = Image.open(self.root + '/image/' + image_2_path, mode='r')
+        image_1_path = self.root + '/image/' + image_1_path
+        image_2_path = self.root + '/image/' + image_2_path
+        path = image_1_path + '||' + image_2_path
+
+        image_1 = Image.open(image_1_path, mode='r')
+        image_2 = Image.open(image_2_path, mode='r')
 
         if self.transform is not None:
             image_1 = self.transform(image_1)
@@ -37,7 +41,7 @@ class TestSet(data.Dataset):
         v2 = get_vector(self.resnet, image_2, self.device, self.layer).reshape((1, 512))
         
 
-        return v1, v2, image_1, image_2, label
+        return v1, v2, image_1, image_2, int(label), path
 
     def __len__(self):
         return self.paths.shape[0]
@@ -62,7 +66,7 @@ class TrainSet(data.Dataset):
 
         path = self.paths[index][0]
 
-        model = int(path.split('/')[1])
+        label = int(path.split('/')[1])
 
         path = self.root + '/image/' + path
 
@@ -74,7 +78,7 @@ class TrainSet(data.Dataset):
         
         v = get_vector(self.resnet, image, self.device, self.layer).reshape((1, 512))
 
-        return v, image, model
+        return v, image, int(label), path
 
     def __len__(self):
         return self.paths.shape[0]
