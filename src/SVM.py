@@ -95,8 +95,8 @@ class SVM(torch.nn.Module):
         for e in range(0, self.epochs):
             loss_epoch = 0
 
-            if e % 10 == 0:
-                self.alpha = self.alpha/5
+            # if e % 10 == 0:
+            #     self.alpha = self.alpha/2
 
             for i in range(0, num_batches):
 

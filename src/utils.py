@@ -41,6 +41,7 @@ def show_prediction_images(
         expected: np.ndarray,
         actual: np.ndarray,
         images: np.ndarray,
+        name: str,
         wrong: bool = True) -> None:
     """
         Displays pairs of images predicted as equal or not
@@ -77,15 +78,18 @@ def show_prediction_images(
     gs = gridspec.GridSpec(size, 2)
     gs.update(wspace=0.05, hspace=0.05)
 
-    for i, img in enumerate(img_vectors):
+    for i in range(len(img_vectors)):
         ax = plt.subplot(gs[i])
         plt.axis('off')
         ax.set_xticklabels([])
         ax.set_yticklabels([])
         ax.set_aspect('equal')
 
-        plt.imshow(np.swapaxes(np.swapaxes(img, 0, 1), 1, 2))
-    return
+        print(img_vectors[i].shape)
+        plt.imshow(img_vectors[i])
+    
+    figure = "{0}.png".format(name)
+    plt.savefig(figure, bbox_inches='tight', dpi=600)
 
 
 def load_test_images(filename: str) -> np.ndarray:
@@ -135,7 +139,7 @@ def load_train_images(filename: str) -> np.ndarray:
     return np.array(paths)
 
 
-def get_vector(model, img: torch.nn.Tensor, device: str, layer) -> torch.Tensor:
+def get_vector(model, img: torch.Tensor, device: str, layer) -> torch.Tensor:
     """
         Extracts feature vectors of an image at the avgpool layer of a resnet model
     """

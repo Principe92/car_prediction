@@ -40,7 +40,7 @@ class CarPredictor():
         df = pd.DataFrame(torch.cat(vectors, dim=0).numpy())
 
         # Performing Dimensonality Reduction with PCA
-        pca = PCA(n_components=100)
+        pca = PCA(n_components=10)
         data = pd.DataFrame(data=pca.fit_transform(df))
         
         #Adding the labels and path to the data that went through the PCA
@@ -98,7 +98,7 @@ class CarPredictor():
         # Transposing Mixed_Data into the right orientation
         match_df = match_df.T
         match_df['Match'] = 1
-        match_df = match_df.rename(columns={100: 'label1', 101:'path1', 202: 'label2', 203:'path2', 204: 'Match'})
+        match_df = match_df.rename(columns={10: 'label1', 11:'path1', 22: 'label2', 23:'path2', 24: 'Match'})
 
 
 
@@ -127,7 +127,7 @@ class CarPredictor():
         # Transposing non_match_df into the right orientation
         non_match_df = non_match_df.T
         non_match_df['Match'] = 0
-        non_match_df = non_match_df.rename(columns={100: 'label1', 101:'path1', 202: 'label2', 203:'path2', 204: 'Match'})
+        non_match_df = non_match_df.rename(columns={10: 'label1', 11:'path1', 22: 'label2', 23:'path2', 24: 'Match'})
 
         # dropping rows where matches accidently exist
         non_match_df = non_match_df[non_match_df['label1'] != non_match_df['label2']]
