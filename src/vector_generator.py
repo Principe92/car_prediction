@@ -11,8 +11,6 @@ import numpy as np
 from src.reader import TrainSet, TestSet
 import string
 from itertools import combinations
-from numba import jit, cuda
-
 
 class CarPredictor():
     """
@@ -22,28 +20,22 @@ class CarPredictor():
     def __init__(self, device: str = None) -> None:
         self.device = device
 
-    @jit()
-    def get_train_ds(self, dataset: TrainSet):
-        vectors = []
-        labels = []
-        imagePaths = []
-
-        for i in range(len(dataset)):
-            vector, image, label, path = dataset[i]
-
-            vectors.append(vector)
-            labels.append(label)
-            imagePaths.append(path)
-
-        return vectors, labels, imagePaths
-
-    # @jit(nopython=True)
     def get_train_df(self, dataset: TrainSet) -> pd.DataFrame:
         """
             Converts the train data loader into a pandas dataframe after applying PCA
         """
 
-        vectors, labels, imagePaths = self.get_train_ds(dataset)
+        vectors = []
+        labels = []
+        imagePaths = []
+
+        for i in range(len(dataset)):
+            print(f'Copying at index: {i}')
+            vector, image, label, path = dataset[i]
+
+            vectors.append(vector)
+            labels.append(label)
+            imagePaths.append(path)
 
         df = pd.DataFrame(torch.cat(vectors, dim=0).numpy())
 
@@ -55,14 +47,14 @@ class CarPredictor():
         data['label'] = pd.DataFrame(data=labels)
         data['path'] = pd.DataFrame(data=imagePaths)
 
-        return self.perform_train_df(data)
+        # data_np = data.to_numpy()
 
-    
-    @jit()
-    def perform_train_df(self, data: pd.DataFrame) -> pd.DataFrame:
+        print(f'data size: {data.shape}')
+
         data2 = data.copy()
 
-        match_df = pd.DataFrame()
+        # match_df = pd.DataFrame()
+        match_df = np.empty((2*data.shape[1], ))
         count = 0
         stop = 0
         while stop == 0:
@@ -71,18 +63,18 @@ class CarPredictor():
             possible_combos = list(combinations(matched_index_list, 2))
 
             if len(possible_combos) != 0:
-                print('Label: %f | Possible combos: %f'.format(label, (len(possible_combos))))
+                print(f'Label: {label} | Possible combos: {len(possible_combos)}')
 
                 for i in range(0, len(possible_combos)):
 
                     # Getting values at index (left side of pair)
-                    leftside = data.iloc[possible_combos[i][0]]
+                    leftside = data.iloc[possible_combos[i][0]].to_numpy()
 
                     # Getting values at index (right side of pair)
-                    rightside = data.iloc[possible_combos[i][1]]
+                    rightside = data.iloc[possible_combos[i][1]].to_numpy()
 
-                    matched_pair = pd.concat([leftside, rightside], axis=0, ignore_index=True)
-                    match_df = pd.concat([match_df, matched_pair], axis=1, ignore_index=True)
+                    matched_pair = np.concatenate((leftside, rightside), axis=None)
+                    match_df = np.vstack([match_df, matched_pair])
 
                     # print(i)
 
@@ -97,20 +89,20 @@ class CarPredictor():
                 data.drop(matched_index_list, inplace=True)
                 data.reset_index(inplace=True, drop=True)  # resetting index
 
-            print('Label: %f | Data size: %f'.format(label, (len(data))))
+            print(f'Label: {label} | Data size: {len(data)}')
 
             if len(data) == 0:
                 stop = 1
 
         # Transposing Mixed_Data into the right orientation
-        match_df = match_df.T
+        match_df = pd.DataFrame(match_df).T
         match_df['Match'] = 1
         match_df = match_df.rename(columns={100: 'label1', 101:'path1', 202: 'label2', 203:'path2', 204: 'Match'})
 
         # Randomly mixing data for the rest
         num_non_match = len(match_df)
         non_match_df = pd.DataFrame()
-        print('# of matched data: %f'.format(num_non_match))
+        print(f'# of matched data: {num_non_match}')
 
         while len(non_match_df.columns) < num_non_match:
             index1 = np.random.randint(0, len(data2))
@@ -125,7 +117,7 @@ class CarPredictor():
             mismatched_pair = pd.concat([leftside, rightside], axis=0, ignore_index=True)
             non_match_df = pd.concat([non_match_df, mismatched_pair], axis=1, ignore_index=True)
 
-            print('# Unmatched size: %s'.format(len(non_match_df.columns)))
+            print(f'# Unmatched size: {len(non_match_df.columns)}')
 
         # Transposing non_match_df into the right orientation
         non_match_df = non_match_df.T

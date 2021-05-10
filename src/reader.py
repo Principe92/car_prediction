@@ -8,6 +8,10 @@ from src.utils import get_vector, load_test_images, load_train_images
 
 
 class TestSet(data.Dataset):
+    """
+        Pytorch dataset that loads testing images,
+        Generates features vectors extracted using resnet
+    """
 
     def __init__(self, root: str, device: str, transform: transforms.Compose = None) -> None:
         super().__init__()
@@ -37,6 +41,7 @@ class TestSet(data.Dataset):
             image_1 = self.transform(image_1)
             image_2 = self.transform(image_2)
 
+        # using resnet, extract the feature vectors required for PCA for each image
         v1 = get_vector(self.resnet, image_1, self.device, self.layer).reshape((1, 512))
         v2 = get_vector(self.resnet, image_2, self.device, self.layer).reshape((1, 512))
         
@@ -48,6 +53,10 @@ class TestSet(data.Dataset):
 
 
 class TrainSet(data.Dataset):
+    """
+        Pytorch dataset that loads training images,
+        Generates feature vectors extracted using resnet
+    """
 
     def __init__(self, root: str, device: str, transform: transforms.Compose = None) -> None:
         super().__init__()
@@ -75,7 +84,7 @@ class TrainSet(data.Dataset):
         if self.transform is not None:
             image = self.transform(image)
 
-        
+        # using resnet, extract the feature vector required for PCA
         v = get_vector(self.resnet, image, self.device, self.layer).reshape((1, 512))
 
         return v, image, int(label), path

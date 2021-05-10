@@ -43,64 +43,33 @@ class Softmax(torch.nn.Module):
         gradients = np.random.rand(self.n_class, X_train.shape[1])
         loss = 0
 
-        # num_batches=10
-        # data_shuffle=np.random.shuffle(data)
-        #batch = data.shape[0] // batch_size
-
         # Calculating gradients (credit to https://tomaxent.com/2017/03/05/cs231n-Assignment-1-softmax/ for some help)
 
         for i in range(0, len(X_train)):
-            # print(i)
             # Make initial prediction
             # Calculating initial prediction values
             wyx = np.matmul(self.w, np.transpose(X_train[i]))
-            # print('wyx')
-            # print(wyx)
-            # print(X_train[i].dot(np.transpose(self.w)))
+
             # making everything non=positive (max of zero) (because e^(non-positive) is between 0 and 1)
             wyx -= np.max(wyx)
+
             # getting the prediction value for the correct class
             correct_wyx = wyx[y_train[i]]
-            # print('Correct_wyx')
-            # print(correct_wyx)
+
             sigma = np.sum(np.exp(wyx))  # the summed denominator
-            # print('Sigma')
-            # print(sigma)
-            # print('e^wyx')
-            # print(np.exp(wyx))
-            # print('y_train')
-            # print(y_train[i])
 
             # The model's calcualted probability for the correct class is correct for loss function
             prob = np.exp(correct_wyx)/sigma
             loss += -np.log(prob)  # Adjusting sum of the loss
-            # print('loss')
 
             for c in range(0, self.n_class):
                 if c == y_train[i]:
                     # Adjusting the gradients of the actual class
-                    gradients[y_train[i],
-                              :] -= ((np.exp(wyx[y_train[i]])/sigma) - 1)*X_train[i]
-                    # print(gradients[y_train[i],:])
-                    #print('wow incredible')
-                    # print(gradients[:,y_train[i]])
+                    gradients[y_train[i], :] -= ((np.exp(wyx[y_train[i]])/sigma) - 1)*X_train[i]
 
                 else:
-                    #print('Gradients before')
-                    # print(gradients[c,:])
-                    # print('wyx[c]')
-                    # print(wyx[c])
-                    #print('the gradient eq')
-                    # print((np.exp(wyx[c])/sigma)*X_train[i])
-                    # Adjusting gradients of the incorrect classes
                     gradients[c, :] -= (np.exp(wyx[c])/sigma)*X_train[i]
-                    #print('Gradients after')
-                    # print(gradients[c,:])
-                # Calculate gradients
-                # gwy=-X_train[i]+((np.exp(wyx)*X_train[i])/np.sum(sigma))
-
-                # gwc=(np.exp(wyx)*X_train[i])/(np.sum(sigma)) #do i have to change for the j?
-
+             
         # Averaging loss
         gradients /= len(X_train)
         loss /= len(X_train)
@@ -108,8 +77,6 @@ class Softmax(torch.nn.Module):
         # Regularization
         gradients += self.reg_const*self.w
         loss += 0.5*self.reg_const*np.sum(self.w**2)
-        # print('loss')
-        # print(loss)
 
         return gradients, loss
 
@@ -125,14 +92,11 @@ class Softmax(torch.nn.Module):
         """
         # TODO: implement me
         self.w = np.random.rand(self.n_class, X_train.shape[1])/1000
+
         # Thinking something like: https://cs231n.github.io/optimization-1/
         num_batches = 10  # where does this fit in
         batch_size = len(X_train)/num_batches
         loss_list = []
-        beta_1 = 0.9
-        beta_2 = 0.999
-        epsilon = 0.0001
-        m = v = 0
 
         for e in range(0, self.epochs):
             loss_epoch = 0
@@ -146,15 +110,11 @@ class Softmax(torch.nn.Module):
 
                 batch_x = X_train[int(i*(batch_size)) :int(i*batch_size+batch_size-1)]
                 batch_y = y_train[int(i*(batch_size)) :int(i*batch_size+batch_size-1)]
-                # print(batch_x)
-                # print(batch_y)
-                # print(type(batch_y))
                 gradients, loss = Softmax.calc_gradient(self, batch_x, batch_y)
 
 
                 self.w += self.lr*gradients
                 loss_epoch = loss
-                # print(self.w)
 
             loss_list.append(loss_epoch)
 
@@ -179,8 +139,6 @@ class Softmax(torch.nn.Module):
         for i in range(0, len(X_test)):
             fx = np.matmul(self.w, np.transpose(X_test[i]))
             index = np.argmax(fx)
-            # print(index)
             y_test.append(index)
-            # print(y_test)
 
         return y_test

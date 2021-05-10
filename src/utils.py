@@ -7,7 +7,11 @@ import matplotlib.gridspec as gridspec
 from torch.autograd import Variable
 
 
-def show_images(images, color=False):
+def show_images(images: np.ndarray, color=False) -> None:
+    """
+        Function originally created by Dr. Stylianou
+        Displays images from a numpy array in a grid
+    """
     if color:
         sqrtimg = int(np.ceil(np.sqrt(images.shape[2]*images.shape[3])))
     else:
@@ -38,6 +42,9 @@ def show_prediction_images(
         actual: np.ndarray,
         images: np.ndarray,
         wrong: bool = True) -> None:
+    """
+        Displays pairs of images predicted as equal or not
+    """
 
     itr = 0
 
@@ -81,24 +88,10 @@ def show_prediction_images(
     return
 
 
-def preprocess_img(x):
-    return 2 * x - 1.0
-
-
-def deprocess_img(x):
-    return (x + 1.0) / 2.0
-
-
-def rel_error(x, y):
-    return np.max(np.abs(x - y) / (np.maximum(1e-8, np.abs(x) + np.abs(y))))
-
-
-def loss_fn(x, y):
-
-    return None
-
-
-def load_test_images(filename) -> np.ndarray:
+def load_test_images(filename: str) -> np.ndarray:
+    """
+        Opens the test set file and returns a numpy array of images paths
+    """
 
     file = open(filename, 'r')
     paths = []
@@ -123,7 +116,10 @@ def load_test_images(filename) -> np.ndarray:
     return np.array(paths)
 
 
-def load_train_images(filename) -> np.ndarray:
+def load_train_images(filename: str) -> np.ndarray:
+    """
+        Opens the training set file and returns a numpy array of image paths
+    """
 
     file = open(filename, 'r')
     paths = []
@@ -139,7 +135,10 @@ def load_train_images(filename) -> np.ndarray:
     return np.array(paths)
 
 
-def get_vector(model, img, device, layer) -> torch.Tensor:
+def get_vector(model, img: torch.nn.Tensor, device: str, layer) -> torch.Tensor:
+    """
+        Extracts feature vectors of an image at the avgpool layer of a resnet model
+    """
 
     t_img = Variable(img.unsqueeze(0)).to(device)
 
@@ -158,4 +157,7 @@ def get_vector(model, img, device, layer) -> torch.Tensor:
 
 
 def get_acc(pred: np.ndarray, actual: np.ndarray) -> float:
+    """
+        Calculates the accuracy of prediction
+    """
     return np.sum(actual == pred)/len(actual)*100

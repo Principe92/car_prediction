@@ -42,17 +42,9 @@ class SVM(torch.nn.Module):
         gradients = np.random.rand(self.n_class, X_train.shape[1])
         loss = 0
 
-        # print('w: ', self.w.shape)
-        # print('y: ', y_train)
-
-        # num_batches=10
-        # data_shuffle=np.random.shuffle(data)
-        #batch = data.shape[0] // batch_size
-
         # Calculating gradients (credit to https://mlxai.github.io/2017/01/06/vectorized-implementation-of-svm-loss-and-gradient-update.html for some help)
 
         for i in range(0, len(X_train)):
-            # print(i)
             # Make initial prediction
 
             scores = np.matmul(self.w, np.transpose(
@@ -103,8 +95,8 @@ class SVM(torch.nn.Module):
         for e in range(0, self.epochs):
             loss_epoch = 0
 
-            # if e % 50 == 0:
-            #     self.alpha = self.alpha/5
+            if e % 10 == 0:
+                self.alpha = self.alpha/5
 
             for i in range(0, num_batches):
 
