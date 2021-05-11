@@ -16,3 +16,7 @@ $ cd car_verification
 ```
     While running the notebook, skip third cell unless you want to regenerate the training and testing data frames. Note that this cell is very time consuming
 ```
+
+## References
+<a id="1">[1]</a> 
+Linjie Yang, Ping Luo, Chen Change Loy, Xiaoou Tang. A Large-Scale Car Dataset for Fine-Grained Categorization and Verification, In Computer Vision and Pattern Recognition (CVPR), 2015.
