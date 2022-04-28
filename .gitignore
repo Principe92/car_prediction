@@ -131,3 +131,5 @@ dmypy.json
 data/*
 *.zip
 data.z*
+
+*.npy
